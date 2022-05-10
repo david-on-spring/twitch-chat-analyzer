@@ -1,6 +1,6 @@
 package com.dlepe.controller;
 
-import com.dlepe.services.LogService;
+import com.dlepe.service.LogService;
 import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;

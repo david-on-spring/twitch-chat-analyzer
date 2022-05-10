@@ -1,4 +1,4 @@
-package com.dlepe;
+package com.dlepe.twitchchatanalyzer;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

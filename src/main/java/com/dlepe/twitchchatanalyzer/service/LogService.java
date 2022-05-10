@@ -1,4 +1,4 @@
-package com.dlepe.service;
+package com.dlepe.twitchchatanalyzer.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

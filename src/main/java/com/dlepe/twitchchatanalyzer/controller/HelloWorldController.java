@@ -1,6 +1,6 @@
-package com.dlepe.controller;
+package com.dlepe.twitchchatanalyzer.controller;
 
-import com.dlepe.service.LogService;
+import com.dlepe.twitchchatanalyzer.service.LogService;
 import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;

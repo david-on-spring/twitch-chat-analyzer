@@ -1,5 +1,5 @@
 FROM amazoncorretto:18 as builder
-MAINTAINER dlepe
+LABEL maintainer="david.lepe94@gmail.com"
 ARG JAR_FILE=target/twitch-chat-analyzer-*.jar
 COPY ${JAR_FILE} app.jar
 RUN java -Djarmode=layertools -jar app.jar extract

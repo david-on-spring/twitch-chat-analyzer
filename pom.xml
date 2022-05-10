@@ -8,13 +8,17 @@
 		<version>2.6.7</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
-	<groupId>com.dlepe</groupId>
+	<groupId>com.dlepe.twitchchatanalyzer</groupId>
 	<artifactId>twitch-chat-analyzer</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>Twitch Chat Analyzer</name>
-	<description>Demo project for Spring Boot</description>
+	<description>Twitch chat API for parsing chatlog data</description>
 	<properties>
 		<java.version>18</java.version>
+		<aws.sdk.version>2.17.186</aws.sdk.version>
+		<swagger.annotations.version>2.2.0</swagger.annotations.version>
+		<spring.fox.version>3.0.0</spring.fox.version>
+		<dockerfile.maven.version>1.4.13</dockerfile.maven.version>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -57,12 +61,12 @@
 		<dependency>
 			<groupId>io.swagger.core.v3</groupId>
 			<artifactId>swagger-annotations</artifactId>
-			<version>2.2.0</version>
+			<version>${swagger.annotations.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>io.springfox</groupId>
 			<artifactId>springfox-swagger2</artifactId>
-			<version>3.0.0</version>
+			<version>${spring.fox.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
@@ -88,6 +92,11 @@
 			<artifactId>joda-time</artifactId>
 			<version>2.10.13</version>
 		</dependency>
+		<dependency>
+			<groupId>software.amazon.awssdk</groupId>
+			<artifactId>dynamodb</artifactId>
+			<version>${aws.sdk.version}</version>
+		</dependency>		
 	</dependencies>
 	<build>
 		<plugins>
@@ -128,8 +137,40 @@
 							<artifactId>lombok</artifactId>
 						</exclude>
 					</excludes>
-					<mainClass>com.dlepe.TwitchChatAnalyzerApplication</mainClass>
+					<mainClass>com.dlepe.twitchchatanalyzer.TwitchChatAnalyzerApplication</mainClass>
 				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>exec-maven-plugin</artifactId>
+				<version>3.0.0</version>
+				<executions>
+					<execution>
+						<id>docker-build</id>
+						<phase>install</phase>
+						<goals>
+							<goal>exec</goal>
+						</goals>
+						<configuration>
+							<executable>docker</executable>
+							<workingDirectory>${project.basedir}</workingDirectory>
+							<arguments>
+								<argument>build</argument>
+								<argument>-f</argument>
+								<argument>./Dockerfile</argument>
+								<argument>--build-arg</argument>
+								<argument>JAR_FILE=target/${project.build.finalName}.jar</argument>
+								<argument>--build-arg</argument>
+								<argument>build-date=$(date)</argument>
+								<argument>-t</argument>
+								<argument>dlepe/${project.artifactId}:${project.version}</argument>
+								<argument>-t</argument>
+								<argument>dlepe/${project.artifactId}:latest</argument>								
+								<argument>.</argument>
+							</arguments>
+						</configuration>
+					</execution>
+				</executions>
 			</plugin>
 		</plugins>
 	</build>

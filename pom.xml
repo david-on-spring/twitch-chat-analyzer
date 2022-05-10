@@ -155,13 +155,14 @@
 							<executable>docker</executable>
 							<workingDirectory>${project.basedir}</workingDirectory>
 							<arguments>
+								<argument>buildx</argument>
 								<argument>build</argument>
+								<argument>--platform</argument>
+								<argument>linux/amd64,linux/arm64</argument>
 								<argument>-f</argument>
 								<argument>./Dockerfile</argument>
 								<argument>--build-arg</argument>
 								<argument>JAR_FILE=target/${project.build.finalName}.jar</argument>
-								<argument>--build-arg</argument>
-								<argument>build-date=$(date)</argument>
 								<argument>-t</argument>
 								<argument>dlepe/${project.artifactId}:${project.version}</argument>
 								<argument>-t</argument>
@@ -169,7 +170,7 @@
 								<argument>.</argument>
 							</arguments>
 						</configuration>
-					</execution>
+					</execution>			
 				</executions>
 			</plugin>
 		</plugins>

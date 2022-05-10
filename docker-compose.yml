@@ -4,7 +4,7 @@ services:
   twitch-chat-analyzer:
     image: dlepe/twitch-chat-analyzer
     ports:
-      - 8080:3000
+      - 127.0.0.1:8080:8080
     depends_on:
       - localstack
   localstack:

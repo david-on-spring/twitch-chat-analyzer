@@ -1,15 +1,12 @@
 package com.dlepe.twitchchatanalyzer.service;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 
-@Slf4j
-@RequiredArgsConstructor
-@Component
-public class LogService {
-    public void getLogData() {
-    }
+public interface LogService {
+    List<String> getLogData(final String channelName);
 
-
+    Map<LocalDateTime, Map<String, AtomicLong>> parseChatLog(final String channelName, final List<String> logs);
 }

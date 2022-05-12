@@ -1,0 +1,7 @@
+twitch-chat-analyzer:
+  log-api:
+    base-url: "https://logs.ivr.fi"
+
+spring:
+  codec:
+    max-in-memory-size: 20MB    

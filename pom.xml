@@ -14,7 +14,7 @@
 	<description>Twitch chat API for parsing chatlog data</description>
 	<properties>
 		<java.version>18</java.version>
-		<aws.sdk.version>2.17.187</aws.sdk.version>
+		<aws.sdk.version>2.17.188</aws.sdk.version>
 		<swagger.annotations.version>2.2.0</swagger.annotations.version>
 		<spring.fox.version>3.0.0</spring.fox.version>
 		<dockerfile.maven.version>1.4.13</dockerfile.maven.version>

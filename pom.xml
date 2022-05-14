@@ -133,6 +133,7 @@
 							<language>spring</language>
 							<generateApis>false</generateApis>
 							<generateApiTests>false</generateApiTests>
+							<generateModelTests>true</generateModelTests>
 							<generateModelTests>false</generateModelTests>
 							<generateSupportingFiles>false</generateSupportingFiles>
 							<apiPackage>com.dlepe.model.twitch.helix</apiPackage>

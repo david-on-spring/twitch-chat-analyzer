@@ -105,11 +105,12 @@
 				<version>3.0.34</version>
 				<executions>
 					<execution>
+						<id>justlog</id>
 						<goals>
 							<goal>generate</goal>
 						</goals>
 						<configuration>
-							<inputSpec>${project.basedir}/src/main/resources/justlog-swagger.json</inputSpec>
+							<inputSpec>${project.basedir}/src/main/resources/openapi/justlog.yaml</inputSpec>
 							<language>spring</language>
 							<generateApis>false</generateApis>
 							<generateApiTests>false</generateApiTests>
@@ -119,6 +120,26 @@
 							<modelPackage>com.dlepe.model.justlog</modelPackage>
 							<configOptions>
 								<sourceFolder>src/gen/java/main</sourceFolder>
+							</configOptions>
+						</configuration>
+					</execution>
+					<execution>
+						<id>twitchapi</id>
+						<goals>
+							<goal>generate</goal>
+						</goals>
+						<configuration>
+							<inputSpec>${project.basedir}/src/main/resources/openapi/twitch-helix.yaml</inputSpec>
+							<language>spring</language>
+							<generateApis>false</generateApis>
+							<generateApiTests>false</generateApiTests>
+							<generateModelTests>false</generateModelTests>
+							<generateSupportingFiles>false</generateSupportingFiles>
+							<apiPackage>com.dlepe.model.twitch.helix</apiPackage>
+							<modelPackage>com.dlepe.model.twitch.helix</modelPackage>
+							<configOptions>
+								<sourceFolder>src/gen/java/main</sourceFolder>
+								<dateLibrary>java8</dateLibrary>
 							</configOptions>
 						</configuration>
 					</execution>
@@ -157,10 +178,9 @@
 							<arguments>
 								<argument>buildx</argument>
 								<argument>build</argument>
-								<argument>--platform</argument>
-								<argument>linux/amd64,linux/arm64</argument>
 								<argument>-f</argument>
 								<argument>./Dockerfile</argument>
+								<argument>--load</argument>
 								<argument>--build-arg</argument>
 								<argument>JAR_FILE=target/${project.build.finalName}.jar</argument>
 								<argument>-t</argument>

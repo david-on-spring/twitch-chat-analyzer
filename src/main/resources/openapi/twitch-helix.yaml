@@ -1,0 +1,123 @@
+openapi: "3.0.0"
+info:
+  version: 5.0.0
+  title: Twitch Helix API
+
+servers:
+  - url: https://api.twitch.tv/helix
+
+paths:
+  /videos:
+    get:
+      summary: Gets video information by one or more video IDs, user ID, or game ID. For lookup by user or game, several filters are available that can be specified as query parameters.
+      operationId: getVideos
+      tags:
+        - videos
+      parameters:
+        - name: id
+          in: query
+          description: "ID of the video being queried. Limit: 100. If this is specified, you cannot use any of the optional query parameters below."
+          required: false
+          schema:
+            type: string
+        - name: user_id
+          in: query
+          description: "ID of the user who owns the video. Limit 1."
+          required: false
+          schema:
+            type: string
+        - name: game_id
+          in: query
+          description: "ID of the game the video is of. Limit 1."
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Video response
+          headers:
+            x-next:
+              description: A link to the next page of responses
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/getVideosResponse"
+components:
+  schemas:
+    getVideosResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                example: 335921245
+              stream_id:
+                type: string
+                format: nullable
+              user_id:
+                type: string
+                example: 141981764
+              user_login:
+                type: string
+                example: twitchdev
+              user_name:
+                type: string
+                example: TwitchDev
+              title:
+                type: string
+                example: Twitch Developers 101
+              description:
+                type: string
+                example: Welcome to Twitch development! Here is a quick overview of our products and information to help you get started.
+              created_at:
+                type: string
+                format: date-time
+                example: 2018-11-14T21:30:18Z
+              published_at:
+                type: string
+                format: date-time
+                example: 2018-11-14T22:04:30Z
+              url:
+                type: string
+                example: https://www.twitch.tv/videos/335921245
+              thumbnail_url:
+                type: string
+                example: https://static-cdn.jtvnw.net/cf_vods/d2nvs31859zcd8/twitchdev/335921245/ce0f3a7f-57a3-4152-bc06-0c6610189fb3/thumb/index-0000000000-%widthx%height.jpg
+              viewable:
+                type: string
+                example: public
+              view_count:
+                type: number
+                example: 1863062
+              language:
+                type: string
+                example: en
+              type:
+                type: string
+                example: upload
+              duration:
+                type: string
+                example: 3m21s
+              muted_segments:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    duration:
+                      type: number
+                      example: 30
+                    offset:
+                      type: number
+                      example: 120
+        pagination:
+          type: object
+          properties:
+            cursor:
+              type: string
+              example: "eyJiIjpudWxsLCJhIjp7Ik9mZnNldCI6MjB9fQ"

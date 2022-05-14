@@ -1,16 +1,20 @@
 package com.dlepe.twitchchatanalyzer.service.impl;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
 import com.dlepe.twitchchatanalyzer.service.LogService;
 
@@ -30,14 +34,19 @@ public class LogServiceImpl implements LogService {
 
     private final WebClient webClient;
     private final static Set<String> STRINGS_TO_PARSE = Set.of("OMEGALUL", "LULW", "OMEGADANCE");
-    private final static DateTimeFormatter DATETIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    private final static DateTimeFormatter MESSAGE_TIMESTAMP_FORMATTER = DateTimeFormatter
+            .ofPattern("yyyy-MM-dd HH:mm:ss");
+    private final Comparator<LocalDateTime> dateComparator = (o1, o2) -> o1.compareTo(o2);
 
     @Override
-    public List<String> getLogData(final String channelName) {
-        Mono<String> response = webClient
+    public List<String> getLogData(final String channelName, final LocalDate logsDate) {
+        final Mono<String> response = webClient
                 .get()
-                .uri(uriBuilder -> uriBuilder.path("/channel/{channelName}/2022/5/11").build(
-                        channelName))
+                .uri(uriBuilder -> uriBuilder.path("/channel/{channelName}/{logYear}/{logMonth}/{logDay}").build(
+                        channelName,
+                        logsDate.getYear(),
+                        logsDate.getMonthValue(),
+                        logsDate.getDayOfMonth()))
                 .accept(MediaType.TEXT_PLAIN)
                 .retrieve()
                 .bodyToMono(String.class);
@@ -46,7 +55,11 @@ public class LogServiceImpl implements LogService {
 
     @Override
     public Map<LocalDateTime, Map<String, AtomicLong>> parseChatLog(final String channelName, final List<String> logs) {
-        Map<LocalDateTime, Map<String, AtomicLong>> emoteCountPerMinute = new ConcurrentHashMap<>();
+        Map<LocalDateTime, Map<String, AtomicLong>> emoteCountPerMinute = new ConcurrentSkipListMap<LocalDateTime, Map<String, AtomicLong>>(
+                dateComparator);
+
+        AtomicLong mostPopularOccurrence = new AtomicLong(0L);
+        AtomicReference<LocalDateTime> mostPopularTimestamp = new AtomicReference<>();
         logs
                 .parallelStream()
                 .forEach(logLine -> {
@@ -56,7 +69,7 @@ public class LogServiceImpl implements LogService {
                             .forEach(s -> emoteCountMap.putIfAbsent(s, new AtomicLong(0)));
 
                     final String[] logParts = logLine.split(" #" + channelName + " ");
-                    final LocalDateTime dateTime = getTimestampToNearestMinute(logParts[0]);
+                    final LocalDateTime logTimestamp = getTimestampToNearestMinute(logParts[0]);
                     final String chatLog = logParts[1];
 
                     final AtomicBoolean containsTrackedEmote = new AtomicBoolean(false);
@@ -69,24 +82,33 @@ public class LogServiceImpl implements LogService {
                                 if (occurrenceCount > 0L) {
                                     containsTrackedEmote.set(true);
                                     emoteCountMap.get(emote).addAndGet(occurrenceCount);
+
+                                    // Logging for the most popular moment
+                                    if (occurrenceCount > mostPopularOccurrence.get()) {
+                                        mostPopularOccurrence.set(occurrenceCount);
+                                        mostPopularTimestamp.set(logTimestamp);
+                                    }
                                 }
                             });
 
                     if (containsTrackedEmote.get()) {
-                        emoteCountPerMinute.merge(dateTime, emoteCountMap, (v1, v2) -> {
+                        emoteCountPerMinute.merge(logTimestamp, emoteCountMap, (v1, v2) -> {
                             v1.putAll(v2);
                             return v1;
                         });
                     }
                 });
 
+        log.info("Most popular timestamp was " + mostPopularTimestamp.get().atOffset(ZoneOffset.UTC) + " with "
+                + mostPopularOccurrence.get()
+                + " counts");
         return emoteCountPerMinute;
     }
 
     private LocalDateTime getTimestampToNearestMinute(final String dateStr) {
         final String timeStamp = StringUtils
                 .trimTrailingCharacter(StringUtils.trimLeadingCharacter(dateStr, '['), ']');
-        return LocalDateTime.parse(timeStamp, DATETIME_FORMATTER).truncatedTo(ChronoUnit.MINUTES);
+        return LocalDateTime.parse(timeStamp, MESSAGE_TIMESTAMP_FORMATTER).truncatedTo(ChronoUnit.MINUTES);
     }
 
     private Long kmpSearch(String pattern, String text) {

@@ -1,7 +1,11 @@
 twitch-chat-analyzer:
   log-api:
     base-url: "https://logs.ivr.fi"
+  twitch-helix-api:
+    base-url: "https://api.twitch.tv/helix"
 
-spring:
-  codec:
-    max-in-memory-size: 20MB    
+logging:
+  level:
+    com:
+      dlepe:
+        twitchchatanalyzer: DEBUG

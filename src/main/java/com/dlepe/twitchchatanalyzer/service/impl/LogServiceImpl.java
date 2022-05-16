@@ -2,7 +2,6 @@ package com.dlepe.twitchchatanalyzer.service.impl;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
@@ -32,7 +31,8 @@ import reactor.core.publisher.Mono;
 @RequiredArgsConstructor
 public class LogServiceImpl implements LogService {
 
-    private final WebClient webClient;
+    private final WebClient logsWebClient;
+
     private final static Set<String> STRINGS_TO_PARSE = Set.of("OMEGALUL", "LULW", "OMEGADANCE");
     private final static DateTimeFormatter MESSAGE_TIMESTAMP_FORMATTER = DateTimeFormatter
             .ofPattern("yyyy-MM-dd HH:mm:ss");
@@ -40,7 +40,7 @@ public class LogServiceImpl implements LogService {
 
     @Override
     public List<String> getLogData(final String channelName, final LocalDate logsDate) {
-        final Mono<String> response = webClient
+        final Mono<String> response = logsWebClient
                 .get()
                 .uri(uriBuilder -> uriBuilder.path("/channel/{channelName}/{logYear}/{logMonth}/{logDay}").build(
                         channelName,
@@ -99,7 +99,7 @@ public class LogServiceImpl implements LogService {
                     }
                 });
 
-        log.info("Most popular timestamp was " + mostPopularTimestamp.get().atOffset(ZoneOffset.UTC) + " with "
+        log.info("Most popular timestamp was " + mostPopularTimestamp.get() + "PST with "
                 + mostPopularOccurrence.get()
                 + " counts");
         return emoteCountPerMinute;

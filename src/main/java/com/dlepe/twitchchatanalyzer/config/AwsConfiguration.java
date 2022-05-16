@@ -10,15 +10,14 @@ import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 
 @Configuration
 public class AwsConfiguration {
-    @Bean
-    public DynamoDbClient getDynamoDbClient() {
-      AwsCredentialsProvider credentialsProvider = 
-                DefaultCredentialsProvider.builder()
-                 .profileName("default")
-                 .build();
-  
-      return DynamoDbClient.builder()
-              .region(Region.US_WEST_2)
-              .credentialsProvider(credentialsProvider).build();
-    }
+  @Bean
+  public DynamoDbClient getDynamoDbClient() {
+    AwsCredentialsProvider credentialsProvider = DefaultCredentialsProvider.builder()
+        .profileName("default")
+        .build();
+
+    return DynamoDbClient.builder()
+        .region(Region.US_WEST_2)
+        .credentialsProvider(credentialsProvider).build();
+  }
 }

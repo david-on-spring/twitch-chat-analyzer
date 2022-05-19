@@ -3,8 +3,14 @@ version: '3.8'
 services:
   twitch-chat-analyzer:
     image: dlepe/twitch-chat-analyzer
+    build:
+      context: .
+      args:
+        - ARG_TIMEZONE=America/Los_Angeles
     ports:
-      - 127.0.0.1:8080:8080
+      - 8080:8080
+    environment:
+      - SPRING_PROFILES_ACTIVE=local # Need to update this to work for CI/CD processes
     depends_on:
       - localstack
   localstack:

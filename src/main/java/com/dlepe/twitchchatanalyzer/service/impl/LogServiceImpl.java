@@ -9,13 +9,18 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
+import com.dlepe.twitchchatanalyzer.dto.TwitchAnalysisDTO.ChatLogAnalysis;
+import com.dlepe.twitchchatanalyzer.dto.TwitchAnalysisDTO.ChatLogRecord;
 import com.dlepe.twitchchatanalyzer.service.LogService;
+import com.google.common.annotations.VisibleForTesting;
 
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
@@ -31,54 +36,89 @@ import reactor.core.publisher.Mono;
 @RequiredArgsConstructor
 public class LogServiceImpl implements LogService {
 
-    private final WebClient logsWebClient;
-
+    // TODO: Drive this from a configuration
     private final static Set<String> STRINGS_TO_PARSE = Set.of("OMEGALUL", "LULW", "OMEGADANCE");
     private final static DateTimeFormatter MESSAGE_TIMESTAMP_FORMATTER = DateTimeFormatter
             .ofPattern("yyyy-MM-dd HH:mm:ss");
+    @VisibleForTesting
+    protected final static String LOGS_API_PATH = "/channel/{channelName}/{logYear}/{logMonth}/{logDay}/";
+
+    private final WebClient logsWebClient;
     private final Comparator<LocalDateTime> dateComparator = (o1, o2) -> o1.compareTo(o2);
 
     @Override
-    public List<String> getLogData(final String channelName, final LocalDate logsDate) {
+    public List<ChatLogRecord> getLogDataForDateRange(final String channelName, final LocalDateTime startTime,
+            final LocalDateTime endTime) {
+        return startTime.toLocalDate().datesUntil(endTime.toLocalDate().plusDays(1))
+                .flatMap(day -> {
+                    return getLogData(channelName, day, startTime, endTime).stream();
+                }).collect(Collectors.toList());
+    }
+
+    private List<ChatLogRecord> getLogData(final String channelName, final LocalDate logsDate,
+            final LocalDateTime startTime,
+            final LocalDateTime endTime) {
+        log.info(String.format("Fetching log data for [channelName=%s] [logDate=%s] [startTime=%s] [endTime=%s]",
+                channelName, logsDate, startTime, endTime));
         final Mono<String> response = logsWebClient
                 .get()
-                .uri(uriBuilder -> uriBuilder.path("/channel/{channelName}/{logYear}/{logMonth}/{logDay}").build(
-                        channelName,
+                .uri(uriBuilder -> uriBuilder.path(LOGS_API_PATH).build(
+                        channelName.toLowerCase(),
                         logsDate.getYear(),
                         logsDate.getMonthValue(),
                         logsDate.getDayOfMonth()))
                 .accept(MediaType.TEXT_PLAIN)
                 .retrieve()
                 .bodyToMono(String.class);
-        return Arrays.asList(response.block().split("\n"));
+
+        return Arrays.asList(response.block().split("\n")).stream()
+                .map(logLine -> buildChatLogRecord(logLine, channelName))
+                .filter((logRecord) -> Objects.nonNull(logRecord) && logRecord.logTimestamp().isAfter(startTime)
+                        && logRecord.logTimestamp().isBefore(endTime))
+                .collect(Collectors.toList());
+    }
+
+    private ChatLogRecord buildChatLogRecord(final String logLine, final String channelName) {
+        try {
+            log.debug(logLine);
+            final String[] logParts = logLine.split(" #" + channelName + " ");
+            final LocalDateTime logTimestamp = getTimestampToNearestMinute(logParts[0]);
+            final String[] chatLogParts = logParts[1].split(":", 2);
+            final String chatterUsername = chatLogParts[0];
+            final String chatText = chatLogParts[1].strip();
+            return new ChatLogRecord(channelName, chatterUsername, chatText, logTimestamp);
+        } catch (Exception e) {
+            log.error("Ignoring log line due to an issue parsing the log line");
+            return null;
+        }
+
     }
 
     @Override
-    public Map<LocalDateTime, Map<String, AtomicLong>> parseChatLog(final String channelName, final List<String> logs) {
+    public ChatLogAnalysis parseChatLogs(final String channelName,
+            final List<ChatLogRecord> chatLogs) {
         Map<LocalDateTime, Map<String, AtomicLong>> emoteCountPerMinute = new ConcurrentSkipListMap<LocalDateTime, Map<String, AtomicLong>>(
                 dateComparator);
 
         AtomicLong mostPopularOccurrence = new AtomicLong(0L);
         AtomicReference<LocalDateTime> mostPopularTimestamp = new AtomicReference<>();
-        logs
+        chatLogs
                 .parallelStream()
-                .forEach(logLine -> {
+                .forEach(logRecord -> {
                     final Map<String, AtomicLong> emoteCountMap = new HashMap<>();
+                    final AtomicBoolean containsTrackedEmote = new AtomicBoolean(false);
+
+                    // Initialize counts
                     STRINGS_TO_PARSE
                             .stream()
                             .forEach(s -> emoteCountMap.putIfAbsent(s, new AtomicLong(0)));
 
-                    final String[] logParts = logLine.split(" #" + channelName + " ");
-                    final LocalDateTime logTimestamp = getTimestampToNearestMinute(logParts[0]);
-                    final String chatLog = logParts[1];
-
-                    final AtomicBoolean containsTrackedEmote = new AtomicBoolean(false);
-
+                    final LocalDateTime logTimestampRounded = logRecord.logTimestamp().truncatedTo(ChronoUnit.MINUTES);
                     // Collect counts
                     STRINGS_TO_PARSE
                             .stream()
                             .forEach(emote -> {
-                                final Long occurrenceCount = kmpSearch(emote, chatLog);
+                                final Long occurrenceCount = kmpSearch(emote, logRecord.chatText());
                                 if (occurrenceCount > 0L) {
                                     containsTrackedEmote.set(true);
                                     emoteCountMap.get(emote).addAndGet(occurrenceCount);
@@ -86,23 +126,20 @@ public class LogServiceImpl implements LogService {
                                     // Logging for the most popular moment
                                     if (occurrenceCount > mostPopularOccurrence.get()) {
                                         mostPopularOccurrence.set(occurrenceCount);
-                                        mostPopularTimestamp.set(logTimestamp);
+                                        mostPopularTimestamp.set(logTimestampRounded);
                                     }
                                 }
                             });
 
                     if (containsTrackedEmote.get()) {
-                        emoteCountPerMinute.merge(logTimestamp, emoteCountMap, (v1, v2) -> {
+                        emoteCountPerMinute.merge(logTimestampRounded, emoteCountMap, (v1, v2) -> {
                             v1.putAll(v2);
                             return v1;
                         });
                     }
                 });
-
-        log.info("Most popular timestamp was " + mostPopularTimestamp.get() + "PST with "
-                + mostPopularOccurrence.get()
-                + " counts");
-        return emoteCountPerMinute;
+        // TODO: compute the timestamp value to the funniest moment on stream!
+        return new ChatLogAnalysis(emoteCountPerMinute, mostPopularTimestamp.get());
     }
 
     private LocalDateTime getTimestampToNearestMinute(final String dateStr) {

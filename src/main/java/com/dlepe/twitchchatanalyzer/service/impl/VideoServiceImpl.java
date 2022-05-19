@@ -1,46 +1,69 @@
 package com.dlepe.twitchchatanalyzer.service.impl;
 
-import com.dlepe.twitchchatanalyzer.config.WebClientLoggingFilter;
-import com.dlepe.twitchchatanalyzer.service.VideoService;
+import java.time.Duration;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.annotation.Value;
+import com.dlepe.twitchchatanalyzer.dto.TwitchAnalysisDTO.ChatLogAnalysis;
+import com.dlepe.twitchchatanalyzer.dto.TwitchAnalysisDTO.TwitchVideoAnalysis;
+import com.dlepe.twitchchatanalyzer.service.LogService;
+import com.dlepe.twitchchatanalyzer.service.VideoService;
+import com.google.common.annotations.VisibleForTesting;
+
 import org.springframework.http.MediaType;
-import org.springframework.security.oauth2.client.web.reactive.function.client.ServerOAuth2AuthorizedClientExchangeFilterFunction;
 import org.springframework.stereotype.Component;
-import org.springframework.web.reactive.function.client.ExchangeFilterFunction;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import io.swagger.model.TwitchVod;
+import io.swagger.model.TwitchVodData;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
 
+@Slf4j
 @Component
+@RequiredArgsConstructor
 public class VideoServiceImpl implements VideoService {
 
+        private final static String VIDEO_TIMESTAMP_PATTERN = "([0-9]+)([hms])";
+
         private final WebClient twitchWebClient;
-
-        @Value("${twitch-chat-analyzer.twitch-helix-api.base-url}")
-        private String twitchHelixBaseUrl;
-
-        public VideoServiceImpl(final WebClient.Builder webClientBuilder,
-                        final ServerOAuth2AuthorizedClientExchangeFilterFunction twitchOAuthExchangeFilter,
-                        final ExchangeFilterFunction logRequest,
-                        @Value("${twitch-chat-analyzer.twitch-helix-api.base-url}") String baseUrl) {
-                this.twitchWebClient = webClientBuilder
-                                .baseUrl(baseUrl)
-                                .defaultHeader("Client-Id", "client-id-here")
-                                .filters(exchangeFilterFunctions -> {
-                                        exchangeFilterFunctions.add(twitchOAuthExchangeFilter);
-                                        exchangeFilterFunctions.add(WebClientLoggingFilter.logRequest());
-                                })
-                                .build();
-        }
+        private final LogService logService;
 
         @Override
-        public void getVideo(final String videoId) {
-                final TwitchVod videoDetails = getVideoDetails(videoId);
+        public List<TwitchVideoAnalysis> getVideo(@NonNull final String videoId) {
+                final TwitchVod videoResponse = getVideoDetails(videoId);
+                return videoResponse.getData()
+                                .stream()
+                                .map(this::analyzeVideo)
+                                .collect(Collectors.toList());
         }
 
-        private TwitchVod getVideoDetails(final String videoId) {
+        private TwitchVideoAnalysis analyzeVideo(final TwitchVodData videoData) {
+                // Get video metadata
+                final OffsetDateTime videoStartTime = videoData.getCreatedAt()
+                                .atZoneSameInstant(ZoneId.systemDefault()).toOffsetDateTime();
+                final Duration videoDuration = getVideoDuration(videoData.getDuration());
+                final OffsetDateTime videoEndTime = videoStartTime
+                                .plusSeconds(videoDuration.toSeconds());
+
+                // Pull logs for the video
+                final ChatLogAnalysis analysis = logService.parseChatLogs(videoData.getUserName().toLowerCase(),
+                                logService.getLogDataForDateRange(videoData.getUserName().toLowerCase(),
+                                                videoStartTime.toLocalDateTime(),
+                                                videoEndTime.toLocalDateTime()));
+
+                return new TwitchVideoAnalysis(videoData.getId(), videoData.getTitle(),
+                                videoData.getUserName().toLowerCase(),
+                                videoStartTime, videoEndTime, analysis);
+        }
+
+        private TwitchVod getVideoDetails(@NonNull final String videoId) {
                 final Mono<TwitchVod> response = twitchWebClient
                                 .get()
                                 .uri(uriBuilder -> uriBuilder
@@ -51,6 +74,31 @@ public class VideoServiceImpl implements VideoService {
                                 .retrieve()
                                 .bodyToMono(TwitchVod.class);
                 return response.block();
+        }
+
+        @VisibleForTesting
+        protected Duration getVideoDuration(@NonNull final String videoDuration) {
+                final Pattern pattern = Pattern.compile(VIDEO_TIMESTAMP_PATTERN);
+                final Matcher matcher = pattern.matcher(videoDuration);
+
+                Duration duration = Duration.ofSeconds(0);
+                while (matcher.find()) {
+                        final Long timeValue = Long.parseLong(matcher.group(1));
+                        final String timeUnit = matcher.group(2);
+                        switch (timeUnit) {
+                                case "h":
+                                        duration = duration.plusHours(timeValue);
+                                        break;
+                                case "m":
+                                        duration = duration.plusMinutes(timeValue);
+                                        break;
+                                case "s":
+                                        duration = duration.plusSeconds(timeValue);
+                                        break;
+                        }
+                }
+
+                return duration;
         }
 
 }

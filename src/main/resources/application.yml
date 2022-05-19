@@ -1,11 +1,21 @@
 twitch-chat-analyzer:
   log-api:
-    base-url: "https://logs.ivr.fi"
+    base-url: "https://localhost:8025"
   twitch-helix-api:
     base-url: "https://api.twitch.tv/helix"
 
-logging:
-  level:
-    com:
-      dlepe:
-        twitchchatanalyzer: DEBUG
+spring:
+  profiles:
+    active: local
+  security:
+    oauth2:
+      client:
+        provider:
+          twitch:
+            token-uri: "https://id.twitch.tv/oauth2/token"
+        registration:
+          twitch:
+            client-id:
+            client-secret:
+            authorization-grant-type: client_credentials
+            provider: twitch

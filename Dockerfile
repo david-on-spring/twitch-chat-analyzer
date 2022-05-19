@@ -1,12 +1,11 @@
-FROM amazoncorretto:18 as builder
-LABEL maintainer="david.lepe94@gmail.com"
-ARG JAR_FILE=target/twitch-chat-analyzer-*.jar
-COPY ${JAR_FILE} app.jar
-RUN java -Djarmode=layertools -jar app.jar extract
-
 FROM amazoncorretto:18
-COPY --from=builder dependencies/ ./
-COPY --from=builder snapshot-dependencies/ ./
-COPY --from=builder spring-boot-loader/ ./
-COPY --from=builder application/ ./
-ENTRYPOINT ["java", "org.springframework.boot.loader.JarLauncher"]
+
+# Set the system timezone, default to UTC
+ARG ARG_TIMEZONE="UTC"
+ENV TZ=${ARG_TIMEZONE}
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
+
+COPY target/twitch-chat-analyzer-*.jar app.jar
+RUN sh -c 'touch /app.jar'
+ENTRYPOINT [ "sh", "-c", "java $JAVA_OPTS -jar /app.jar" ]

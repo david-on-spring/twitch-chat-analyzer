@@ -1,6 +1,7 @@
 package com.dlepe.twitchchatanalyzer.service.impl;
 
 import java.time.Duration;
+import java.time.LocalDateTime;
 
 import com.dlepe.twitchchatanalyzer.service.LogService;
 
@@ -40,5 +41,15 @@ public class VideoServiceImplTest {
         Assert.assertEquals(10, duration.toMinutesPart());
         Assert.assertEquals(30, duration.toSecondsPart());
 
+    }
+
+    @Test
+    void testGetVideoTimestamp() {
+        final LocalDateTime startTime = LocalDateTime.now();
+        final LocalDateTime endTime = startTime.plusHours(3).plusMinutes(10).plusSeconds(30);
+
+        final String durationText = videoAnalysisService.getVideoTimestamp(startTime, endTime);
+
+        Assert.assertEquals("3h10m30s", durationText);
     }
 }

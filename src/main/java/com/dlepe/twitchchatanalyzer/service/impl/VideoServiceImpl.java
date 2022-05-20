@@ -1,8 +1,10 @@
 package com.dlepe.twitchchatanalyzer.service.impl;
 
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -58,9 +60,13 @@ public class VideoServiceImpl implements VideoService {
                                                 videoStartTime.toLocalDateTime(),
                                                 videoEndTime.toLocalDateTime()));
 
+                final String videoTimestamp = getVideoTimestamp(videoStartTime.toLocalDateTime(),
+                                videoEndTime.toLocalDateTime());
+                final String videoHotspot = videoData.getUrl() + "?t=" + videoTimestamp;
+
                 return new TwitchVideoAnalysis(videoData.getId(), videoData.getTitle(),
                                 videoData.getUserName().toLowerCase(),
-                                videoStartTime, videoEndTime, analysis);
+                                videoStartTime, videoEndTime, videoHotspot, analysis);
         }
 
         private TwitchVod getVideoDetails(@NonNull final String videoId) {
@@ -99,6 +105,17 @@ public class VideoServiceImpl implements VideoService {
                 }
 
                 return duration;
+        }
+
+        @VisibleForTesting
+        protected String getVideoTimestamp(final LocalDateTime startTime, final LocalDateTime specifiedTime) {
+                final Duration duration = Duration.between(startTime, specifiedTime);
+                final Long totalSecondsDifference = duration.get(ChronoUnit.SECONDS);
+                final Long hours = totalSecondsDifference / 3600;
+                final Long minutes = (totalSecondsDifference % 3600) / 60;
+                final Long seconds = totalSecondsDifference % 60;
+
+                return String.format("%dh%dm%ds", hours, minutes, seconds);
         }
 
 }

@@ -9,7 +9,7 @@ public sealed interface TwitchAnalysisDTO {
 
         record TwitchVideoAnalysis(String videoId, String videoTitle, String channelName,
                         OffsetDateTime startTime,
-                        OffsetDateTime endTime,
+                        OffsetDateTime endTime, String hotspotTimestamp,
                         ChatLogAnalysis chatAnalysis)
                         implements TwitchAnalysisDTO {
         }

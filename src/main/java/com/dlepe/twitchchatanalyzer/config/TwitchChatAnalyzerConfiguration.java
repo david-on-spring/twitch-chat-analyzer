@@ -1,5 +1,11 @@
 package com.dlepe.twitchchatanalyzer.config;
 
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -80,6 +86,25 @@ public class TwitchChatAnalyzerConfiguration {
                                 .authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
                                 .build();
                 return new InMemoryReactiveClientRegistrationRepository(registration);
+        }
+
+        @Bean
+        public ObjectMapper objectMapper() {
+                ObjectMapper mapper = new ObjectMapper();
+
+                // Don't throw an exception when json has extra fields you are
+                // not serializing on. This is useful when you want to use a pojo
+                // for deserialization and only care about a portion of the json
+                mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+
+                // Ignore null values when writing json.
+                mapper.setSerializationInclusion(Include.NON_NULL);
+
+                // Write times as a String instead of a Long so its human readable.
+                mapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+                mapper.registerModule(new JavaTimeModule());
+
+                return mapper;
         }
 
         private ServerOAuth2AuthorizedClientExchangeFilterFunction buildOAuthExchangeFilter(

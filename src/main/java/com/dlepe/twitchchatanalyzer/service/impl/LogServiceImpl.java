@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
 import com.dlepe.twitchchatanalyzer.dto.TwitchAnalysisDTO.ChatLogAnalysis;
 import com.dlepe.twitchchatanalyzer.dto.TwitchAnalysisDTO.ChatLogRecord;
 import com.dlepe.twitchchatanalyzer.service.LogService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 
 import org.springframework.http.MediaType;
@@ -28,6 +29,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
 
@@ -44,6 +46,7 @@ public class LogServiceImpl implements LogService {
     protected final static String LOGS_API_PATH = "/channel/{channelName}/{logYear}/{logMonth}/{logDay}/";
 
     private final WebClient logsWebClient;
+    private final ObjectMapper objectMapper;
     private final Comparator<LocalDateTime> dateComparator = (o1, o2) -> o1.compareTo(o2);
 
     @Override
@@ -58,7 +61,7 @@ public class LogServiceImpl implements LogService {
     private List<ChatLogRecord> getLogData(final String channelName, final LocalDate logsDate,
             final LocalDateTime startTime,
             final LocalDateTime endTime) {
-        log.info(String.format("Fetching log data for [channelName=%s] [logDate=%s] [startTime=%s] [endTime=%s]",
+        log.debug(String.format("Fetching log data for [channelName=%s] [logDate=%s] [startTime=%s] [endTime=%s]",
                 channelName, logsDate, startTime, endTime));
         final Mono<String> response = logsWebClient
                 .get()
@@ -73,14 +76,14 @@ public class LogServiceImpl implements LogService {
 
         return Arrays.asList(response.block().split("\n")).stream()
                 .map(logLine -> buildChatLogRecord(logLine, channelName))
-                .filter((logRecord) -> Objects.nonNull(logRecord) && logRecord.logTimestamp().isAfter(startTime)
-                        && logRecord.logTimestamp().isBefore(endTime))
+                .filter((logRecord) -> Objects.nonNull(logRecord)
+                        && (logRecord.logTimestamp().isAfter(startTime) || logRecord.logTimestamp().isEqual(startTime))
+                        && (logRecord.logTimestamp().isBefore(endTime) || logRecord.logTimestamp().isEqual(endTime)))
                 .collect(Collectors.toList());
     }
 
     private ChatLogRecord buildChatLogRecord(final String logLine, final String channelName) {
         try {
-            log.debug(logLine);
             final String[] logParts = logLine.split(" #" + channelName + " ");
             final LocalDateTime logTimestamp = getTimestampToNearestMinute(logParts[0]);
             final String[] chatLogParts = logParts[1].split(":", 2);
@@ -95,6 +98,7 @@ public class LogServiceImpl implements LogService {
     }
 
     @Override
+    @SneakyThrows
     public ChatLogAnalysis parseChatLogs(final String channelName,
             final List<ChatLogRecord> chatLogs) {
         Map<LocalDateTime, Map<String, AtomicLong>> emoteCountPerMinute = new ConcurrentSkipListMap<LocalDateTime, Map<String, AtomicLong>>(
@@ -138,8 +142,12 @@ public class LogServiceImpl implements LogService {
                         });
                     }
                 });
-        // TODO: compute the timestamp value to the funniest moment on stream!
-        return new ChatLogAnalysis(emoteCountPerMinute, mostPopularTimestamp.get());
+
+        final ChatLogAnalysis analysis = new ChatLogAnalysis(emoteCountPerMinute, mostPopularTimestamp.get());
+        if (log.isDebugEnabled()) {
+            log.debug(objectMapper.writeValueAsString(analysis));
+        }
+        return analysis;
     }
 
     private LocalDateTime getTimestampToNearestMinute(final String dateStr) {
@@ -158,7 +166,6 @@ public class LogServiceImpl implements LogService {
 
         // base case 2: text is NULL, or text's length is less than that of pattern's
         if (text == null || pattern.length() > text.length()) {
-            System.out.println("Pattern not found");
             return count;
         }
 

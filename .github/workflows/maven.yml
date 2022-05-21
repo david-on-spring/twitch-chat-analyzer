@@ -22,11 +22,21 @@ jobs:
           distribution: "corretto"
           cache: maven
       - name: Inject client id into the properties file
-        run: perl -pi -e 's/TWITCH_CLIENT_ID/"$CLIENT_ID"/' ./src/main/resources/application.yml
+        uses: jacobtomlinson/gha-find-replace@v2
+        with:
+          find: "TWITCH_CLIENT_ID"
+          replace: "$CLIENT_ID"
+          regex: false
+          include: "**application.yml"
         env:
           CLIENT_ID: ${{ secrets.TWITCH_CLIENT_ID }}
       - name: Inject client secret into the properties file
-        run: perl -pi -e 's/TWITCH_CLIENT_SECRET/"$CLIENT_SECRET"/' ./src/main/resources/application.yml
+        uses: jacobtomlinson/gha-find-replace@v2
+        with:
+          find: "TWITCH_CLIENT_SECRET"
+          replace: "$CLIENT_SECRET"
+          regex: false
+          include: "**application.yml"
         env:
           CLIENT_SECRET: ${{ secrets.TWITCH_CLIENT_SECRET }}
       - name: Build with Maven

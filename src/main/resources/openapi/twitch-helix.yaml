@@ -43,10 +43,10 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/getVideosResponse"
+                $ref: "#/components/schemas/TwitchVod"
 components:
   schemas:
-    getVideosResponse:
+    TwitchVod:
       type: object
       properties:
         data:

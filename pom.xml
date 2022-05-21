@@ -12,14 +12,30 @@
 	<version>0.0.1-SNAPSHOT</version>
 	<name>Twitch Chat Analyzer</name>
 	<description>Twitch chat API for parsing chatlog data</description>
+	<profiles>
+		<profile>
+			<id>local</id>
+			<activation>
+				<activeByDefault>true</activeByDefault>
+				<property>
+					<name>spring.profiles.active</name>
+					<value>local</value>
+				</property>
+			</activation>
+		</profile>
+	</profiles>
 	<properties>
 		<java.version>18</java.version>
-		<aws.sdk.version>2.17.195</aws.sdk.version>
-		<swagger.annotations.version>2.2.0</swagger.annotations.version>
-		<spring.fox.version>3.0.0</spring.fox.version>
-		<dockerfile.maven.version>1.4.13</dockerfile.maven.version>
-		<jaxb.api.version>2.3.1</jaxb.api.version>
-		<jaxb.runtime.version>3.0.2</jaxb.runtime.version>
+		<aws-sdk-version>2.17.195</aws-sdk-version>
+		<swagger-annotations-version>2.2.0</swagger-annotations-version>
+		<spring-fox-version>3.0.0</spring-fox-version>
+		<dockerfile-maven-version>1.4.13</dockerfile-maven-version>
+		<jaxb-api-version>2.3.1</jaxb-api-version>
+		<jaxb-runtime-version>3.0.2</jaxb-runtime-version>
+		<swagger-codegen-maven-plugin-version>3.0.34</swagger-codegen-maven-plugin-version>
+		<exec-maven-plugin-version>3.0.0</exec-maven-plugin-version>
+		<project-openapi-path>${project.basedir}/src/main/resources/openapi</project-openapi-path>
+		<google-guava-version>31.1-jre</google-guava-version>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -33,6 +49,10 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-webflux</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.security</groupId>
+			<artifactId>spring-security-oauth2-client</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -70,7 +90,7 @@
 		<dependency>
 			<groupId>io.swagger.core.v3</groupId>
 			<artifactId>swagger-annotations</artifactId>
-			<version>${swagger.annotations.version}</version>
+			<version>${swagger-annotations-version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -79,12 +99,12 @@
 		<dependency>
 			<groupId>javax.xml.bind</groupId>
 			<artifactId>jaxb-api</artifactId>
-			<version>${jaxb.api.version}</version>
+			<version>${jaxb-api-version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.glassfish.jaxb</groupId>
 			<artifactId>jaxb-runtime</artifactId>
-			<version>${jaxb.runtime.version}</version>
+			<version>${jaxb-runtime-version}</version>
 		</dependency>
 		<dependency>
 			<groupId>junit</groupId>
@@ -94,7 +114,19 @@
 		<dependency>
 			<groupId>software.amazon.awssdk</groupId>
 			<artifactId>dynamodb</artifactId>
-			<version>${aws.sdk.version}</version>
+			<version>${aws-sdk-version}</version>
+		</dependency>
+		<dependency>
+			<!-- Only needed for development/running on the Apple Silicon architecture -->
+			<groupId>io.netty</groupId>
+			<artifactId>netty-resolver-dns-native-macos</artifactId>
+			<version>4.1.77.Final</version>
+			<classifier>osx-aarch_64</classifier>
+		</dependency>
+		<dependency>
+			<groupId>com.google.guava</groupId>
+			<artifactId>guava</artifactId>
+			<version>${google-guava-version}</version>
 		</dependency>
 	</dependencies>
 	<build>
@@ -102,7 +134,13 @@
 			<plugin>
 				<groupId>io.swagger.codegen.v3</groupId>
 				<artifactId>swagger-codegen-maven-plugin</artifactId>
-				<version>3.0.34</version>
+				<version>${swagger-codegen-maven-plugin-version}</version>
+				<configuration>
+					<configOptions>
+						<dateLibrary>java8</dateLibrary>
+					</configOptions>
+					<output>${generated-sources-path}</output>
+				</configuration>
 				<executions>
 					<execution>
 						<id>justlog</id>
@@ -110,17 +148,13 @@
 							<goal>generate</goal>
 						</goals>
 						<configuration>
-							<inputSpec>${project.basedir}/src/main/resources/openapi/justlog.yaml</inputSpec>
+							<inputSpec>${project-openapi-path}/justlog.yaml</inputSpec>
 							<language>spring</language>
 							<generateApis>false</generateApis>
 							<generateApiTests>false</generateApiTests>
+							<generateModels>true</generateModels>
 							<generateModelTests>false</generateModelTests>
 							<generateSupportingFiles>false</generateSupportingFiles>
-							<apiPackage>com.dlepe.model.justlog</apiPackage>
-							<modelPackage>com.dlepe.model.justlog</modelPackage>
-							<configOptions>
-								<sourceFolder>src/gen/java/main</sourceFolder>
-							</configOptions>
 						</configuration>
 					</execution>
 					<execution>
@@ -129,18 +163,13 @@
 							<goal>generate</goal>
 						</goals>
 						<configuration>
-							<inputSpec>${project.basedir}/src/main/resources/openapi/twitch-helix.yaml</inputSpec>
+							<inputSpec>${project-openapi-path}/twitch-helix.yaml</inputSpec>
 							<language>spring</language>
 							<generateApis>false</generateApis>
 							<generateApiTests>false</generateApiTests>
+							<generateModels>true</generateModels>
 							<generateModelTests>false</generateModelTests>
 							<generateSupportingFiles>false</generateSupportingFiles>
-							<apiPackage>com.dlepe.model.twitch.helix</apiPackage>
-							<modelPackage>com.dlepe.model.twitch.helix</modelPackage>
-							<configOptions>
-								<sourceFolder>src/gen/java/main</sourceFolder>
-								<dateLibrary>java8</dateLibrary>
-							</configOptions>
 						</configuration>
 					</execution>
 				</executions>
@@ -163,32 +192,33 @@
 			</plugin>
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>exec-maven-plugin</artifactId>
-				<version>3.0.0</version>
+				<artifactId>build-helper-maven-plugin</artifactId>
+				<version>${exec-maven-plugin-version}</version>
 				<executions>
 					<execution>
-						<id>docker-build</id>
-						<phase>install</phase>
+						<id>add-source</id>
+						<phase>generate-sources</phase>
 						<goals>
-							<goal>exec</goal>
+							<goal>add-source</goal>
 						</goals>
 						<configuration>
-							<executable>docker</executable>
-							<workingDirectory>${project.basedir}</workingDirectory>
-							<arguments>
-								<argument>buildx</argument>
-								<argument>build</argument>
-								<argument>-f</argument>
-								<argument>./Dockerfile</argument>
-								<argument>--load</argument>
-								<argument>--build-arg</argument>
-								<argument>JAR_FILE=target/${project.build.finalName}.jar</argument>
-								<argument>-t</argument>
-								<argument>dlepe/${project.artifactId}:${project.version}</argument>
-								<argument>-t</argument>
-								<argument>dlepe/${project.artifactId}:latest</argument>
-								<argument>.</argument>
-							</arguments>
+							<sources>
+								<source>${project.build.directory}/generated-sources/swagger/src/main/java/</source>
+							</sources>
+						</configuration>
+					</execution>
+					<execution>
+						<id>add-test-resource</id>
+						<phase>generate-test-sources</phase>
+						<goals>
+							<goal>add-test-resource</goal>
+						</goals>
+						<configuration>
+							<resources>
+								<resource>
+									<directory>${project.basedir}/src/test/resources</directory>
+								</resource>
+							</resources>
 						</configuration>
 					</execution>
 				</executions>

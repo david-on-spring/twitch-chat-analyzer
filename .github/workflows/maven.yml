@@ -21,12 +21,12 @@ jobs:
           java-version: "18"
           distribution: "corretto"
           cache: maven
-      - name: Inject secrets into the properties file
-      - run: perl -pi -e 's/TWITCH_CLIENT_ID/"$ENV{TWITCH_CLIENT_ID}"/' ./src/main/resources/application.yml
+      - name: Inject client id into the properties file
+        run: perl -pi -e 's/TWITCH_CLIENT_ID/"$ENV{TWITCH_CLIENT_ID}"/' ./src/main/resources/application.yml
         env:
           TOKEN: ${{ secrets.TWITCH_CLIENT_ID }}
-      - name: Inject secrets into the properties file
-      - run: perl -pi -e 's/TWITCH_CLIENT_SECRET/"$ENV{TWITCH_CLIENT_SECRET}"/' ./src/main/resources/application.yml
+      - name: Inject client secret into the properties file
+        run: perl -pi -e 's/TWITCH_CLIENT_SECRET/"$ENV{TWITCH_CLIENT_SECRET}"/' ./src/main/resources/application.yml
         env:
           TOKEN: ${{ secrets.TWITCH_CLIENT_SECRET }}
       - name: Build with Maven

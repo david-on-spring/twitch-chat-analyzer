@@ -15,7 +15,7 @@ spring:
             token-uri: "https://id.twitch.tv/oauth2/token"
         registration:
           twitch:
-            client-id:
-            client-secret:
+            client-id: TWITCH_CLIENT_ID
+            client-secret: TWITCH_CLIENT_SECRET
             authorization-grant-type: client_credentials
             provider: twitch

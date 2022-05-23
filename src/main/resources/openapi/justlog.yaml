@@ -16,7 +16,7 @@ paths:
   /admin/channels:
     post:
       security:
-        - api_key: []
+        - api_key: [ ]
       description: Will add the channels to log, only works with userIds
       consumes:
         - application/json
@@ -44,7 +44,7 @@ paths:
           description: ""
     delete:
       security:
-        - api_key: []
+        - api_key: [ ]
       description: Will remove the channels to log, only works with userIds
       consumes:
         - application/json

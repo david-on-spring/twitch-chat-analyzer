@@ -7,9 +7,12 @@ services:
       context: .
       args:
         - ARG_TIMEZONE=America/Los_Angeles
+        - DEBUG_OPTS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
     ports:
       - 8080:8080
+      - 5005:5005
     environment:
+      - SPRING_PROFILES_ACTIVE=local
       - REDIS_HOSTNAME=redis
     depends_on:
       - redis

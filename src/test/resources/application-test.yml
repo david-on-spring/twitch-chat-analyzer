@@ -34,11 +34,6 @@ twitch-chat-analyzer:
     stream_ending:
       - "WELL STREAM mizkifL"
 
-redis:
-  hostname: localhost
-  password: REDIS_PASSWORD
-  port: 6379
-
 spring:
   security:
     oauth2:
@@ -48,15 +43,12 @@ spring:
             token-uri: "https://id.twitch.tv/oauth2/token"
         registration:
           twitch:
-            client-id: TWITCH_CLIENT_ID
-            client-secret: TWITCH_CLIENT_SECRET
+            client-id: "SOME_CLIENT_ID"
+            client-secret: "SOME_CLIENT_SECRET"
             authorization-grant-type: client_credentials
             provider: twitch
 
-# Error handling configuration
-server:
-  error:
-    include-message: always
-    include-binding-errors: always
-    include-stacktrace: ON_PARAM
-    include-exception: false
+redis:
+  hostname: localhost
+  password: REDIS_PASSWORD
+  port: 6379

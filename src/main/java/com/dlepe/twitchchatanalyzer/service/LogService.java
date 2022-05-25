@@ -1,15 +1,18 @@
 package com.dlepe.twitchchatanalyzer.service;
 
+import com.dlepe.twitchchatanalyzer.dto.ChatLogRecord;
+import com.dlepe.twitchchatanalyzer.model.VideoDetails;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import com.dlepe.twitchchatanalyzer.dto.TwitchAnalysisDTO.ChatLogAnalysis;
-import com.dlepe.twitchchatanalyzer.dto.TwitchAnalysisDTO.ChatLogRecord;
-
 public interface LogService {
-        List<ChatLogRecord> getLogDataForDateRange(final String channelName, final LocalDateTime startTime,
-                        final LocalDateTime endTime);
 
-        ChatLogAnalysis parseChatLogs(final String channelName,
-                        final List<ChatLogRecord> chatLogs);
+    List<ChatLogRecord> getRawLogDataForVideo(final VideoDetails videoDetails);
+
+    List<ChatLogRecord> getRawLogDataForDateRange(final String channelName,
+        final LocalDateTime startTime, final LocalDateTime endTime);
+
+
+    void parseChatLogs(final VideoDetails videoDetails,
+        final List<ChatLogRecord> chatLogs);
 }

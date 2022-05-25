@@ -7,18 +7,21 @@ services:
       context: .
       args:
         - ARG_TIMEZONE=America/Los_Angeles
+        - DEBUG_OPTS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
     ports:
       - "8080:8080"
+      - "5005:5005"
     environment:
+      - SPRING_PROFILES_ACTIVE=local
       - REDIS_HOSTNAME=redis
+      - REDIS_PASSWORD=
     depends_on:
       - redis
   redis:
     container_name: "redis"
-    image: redis:7-alpine3.15
+    image: redislabs/redistimeseries:latest
     ports:
-      - '6379:6379'
-    command: redis-server --save 20 1 --loglevel warning --requirepass REDIS_PASSWORD
+      - "6379:6379"
     volumes:
       - redis_data:/data
 volumes:

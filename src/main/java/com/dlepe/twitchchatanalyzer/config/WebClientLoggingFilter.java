@@ -1,11 +1,10 @@
 package com.dlepe.twitchchatanalyzer.config;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.reactive.function.client.ClientRequest;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.ExchangeFilterFunction;
-
-import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
 
 @Slf4j
@@ -20,13 +19,13 @@ public class WebClientLoggingFilter {
         });
     }
 
-    public static ExchangeFilterFunction logResponse() {
-        return ExchangeFilterFunction.ofResponseProcessor(response -> {
-            logStatus(response);
-            logHeaders(response);
+    private static void logMethodAndUrl(ClientRequest request) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(request.method().name());
+        sb.append(" to ");
+        sb.append(request.url());
 
-            return logBody(response);
-        });
+        log.debug(sb.toString());
     }
 
     private static void logHeaders(ClientRequest request) {
@@ -41,31 +40,18 @@ public class WebClientLoggingFilter {
         log.debug("{}={}", name, value);
     }
 
-    private static void logMethodAndUrl(ClientRequest request) {
-        StringBuilder sb = new StringBuilder();
-        sb.append(request.method().name());
-        sb.append(" to ");
-        sb.append(request.url());
+    public static ExchangeFilterFunction logResponse() {
+        return ExchangeFilterFunction.ofResponseProcessor(response -> {
+            logStatus(response);
+            logHeaders(response);
 
-        log.debug(sb.toString());
+            return logBody(response);
+        });
     }
 
     private static void logStatus(ClientResponse response) {
         HttpStatus status = response.statusCode();
-        log.debug("Returned staus code {} ({})", status.value(), status.getReasonPhrase());
-    }
-
-    private static Mono<ClientResponse> logBody(ClientResponse response) {
-        if (response.statusCode() != null
-                && (response.statusCode().is4xxClientError() || response.statusCode().is5xxServerError())) {
-            return response.bodyToMono(String.class)
-                    .flatMap(body -> {
-                        log.debug("Body is {}", body);
-                        return Mono.just(response);
-                    });
-        } else {
-            return Mono.just(response);
-        }
+        log.debug("Returned status code {} ({})", status.value(), status.getReasonPhrase());
     }
 
     private static void logHeaders(ClientResponse response) {
@@ -74,5 +60,19 @@ public class WebClientLoggingFilter {
                 logNameAndValuePair(name, value);
             });
         });
+    }
+
+    private static Mono<ClientResponse> logBody(ClientResponse response) {
+        if (response.statusCode() != null
+            && (response.statusCode().is4xxClientError() || response.statusCode()
+            .is5xxServerError())) {
+            return response.bodyToMono(String.class)
+                .flatMap(body -> {
+                    log.debug("Body is {}", body);
+                    return Mono.just(response);
+                });
+        } else {
+            return Mono.just(response);
+        }
     }
 }

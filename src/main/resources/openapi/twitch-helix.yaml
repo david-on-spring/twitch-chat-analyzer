@@ -43,10 +43,36 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/TwitchVod"
+                $ref: "#/components/schemas/TwitchHelixVideoResponse"
+  /users:
+    get:
+      summary: Gets information about one or more specified Twitch users. Users are identified by optional user IDs and/or login name. If neither a user ID nor a login name is specified, the user is looked up by Bearer token.
+      operationId: getUsers
+      tags:
+        - users
+      parameters:
+        - name: id
+          in: query
+          description: "User ID. Multiple user IDs can be specified. Limit: 100."
+          required: false
+          schema:
+            type: string
+        - name: login
+          in: query
+          description: "User login name. Multiple login names can be specified. Limit: 100."
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: User response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TwitchHelixVideoResponse"
 components:
   schemas:
-    TwitchVod:
+    TwitchHelixVideoResponse:
       type: object
       properties:
         data:
@@ -121,3 +147,62 @@ components:
             cursor:
               type: string
               example: "eyJiIjpudWxsLCJhIjp7Ik9mZnNldCI6MjB9fQ"
+    TwitchHelixUserResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              broadcaster_type:
+                type: string
+                example: partner
+                format: nullable
+                enum:
+                  - partner
+                  - affiliate
+              description:
+                type: string
+                format: nullable
+              display_name:
+                type: string
+                example: twitchdev
+                format: nullable
+              id:
+                type: string
+                example: 335921245
+                format: nullable
+              login:
+                type: string
+                example: TwitchDev
+                format: nullable
+              offline_image_url:
+                type: string
+                example: https://www.twitch.tv/videos/335921245
+                format: nullable
+              profile_image_url:
+                type: string
+                example: https://www.twitch.tv/videos/335921245
+                format: nullable
+              type:
+                type: string
+                example: staff
+                format: nullable
+                enum:
+                  - staff
+                  - admin
+                  - global_mod
+              view_count:
+                type: number
+                example: 123
+              url:
+                type: string
+                example: https://www.twitch.tv/videos/335921245
+              email:
+                type: string
+                example: test@twitch.com
+              created_at:
+                type: string
+                format: date-time
+                example: 2018-11-14T22:04:30Z

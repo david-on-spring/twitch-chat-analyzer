@@ -18,29 +18,40 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class VideoController {
 
-    private final VideoService videoService;
+	private final VideoService videoService;
 
-    @GetMapping("/{userId}/videos")
-    public List<VideoDetails> getVideosForUserId(@PathVariable final String userId) {
-        return videoService.getVideosForUserId(userId);
-    }
+	@GetMapping("/{userId}/videos")
+	public List<VideoDetails> getVideosForUserId(@PathVariable final String userId) {
+		return videoService.getVideosForUserId(userId);
+	}
 
-    @GetMapping("/{videoId}")
-    @SneakyThrows
-    public VideoDetails getVideoDetailsForVideoId(@PathVariable final String videoId) {
-        return videoService.getVideoByVideoId(videoId);
-    }
+	@GetMapping("/{videoId}")
+	@SneakyThrows
+	public VideoDetails getVideoDetailsForVideoId(@PathVariable final String videoId) {
+		return videoService.getVideoByVideoId(videoId);
+	}
 
-    @PostMapping("/{videoId}/analysis")
-    @SneakyThrows
-    public ResponseEntity<Void> createVideoAnalysis(@PathVariable final String videoId) {
-        videoService.createVideoAnalysis(videoId);
-        return ResponseEntity.ok().build();
-    }
+	@PostMapping("/{userId}/videos/analysis")
+	@SneakyThrows
+	public ResponseEntity<Void> analyzeAllVideos(@PathVariable final String userId) {
+		List<VideoDetails> videoDetails = videoService.getVideosForUserId(userId);
+		videoDetails.stream().filter(vod -> !vod.isIndexed())
+			.forEach(video -> videoService.createVideoAnalysis(video.getId()));
+		return ResponseEntity.ok().build();
+	}
 
-    @GetMapping("/{videoId}/analysis")
-    @SneakyThrows
-    public ResponseEntity<List<VideoChatTimestamp>> getVideoAnalysis(@PathVariable final String videoId) {
-        return ResponseEntity.ok(videoService.getVideoAnalysis(videoId));
-    }
+	@PostMapping("/{videoId}/analysis")
+	@SneakyThrows
+	public ResponseEntity<Void> createVideoAnalysis(@PathVariable final String videoId) {
+		videoService.createVideoAnalysis(videoId);
+		return ResponseEntity.ok().build();
+	}
+
+
+	@GetMapping("/{videoId}/analysis")
+	@SneakyThrows
+	public ResponseEntity<List<VideoChatTimestamp>> getVideoAnalysis(
+		@PathVariable final String videoId) {
+		return ResponseEntity.ok(videoService.getVideoAnalysis(videoId));
+	}
 }

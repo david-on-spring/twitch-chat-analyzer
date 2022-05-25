@@ -4,15 +4,16 @@ import com.dlepe.twitchchatanalyzer.dto.ChatLogRecord;
 import com.dlepe.twitchchatanalyzer.model.VideoDetails;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 public interface LogService {
 
-    List<ChatLogRecord> getRawLogDataForVideo(final VideoDetails videoDetails);
+	List<ChatLogRecord> getRawLogDataForVideo(final VideoDetails videoDetails);
 
-    List<ChatLogRecord> getRawLogDataForDateRange(final String channelName,
-        final LocalDateTime startTime, final LocalDateTime endTime);
+	List<ChatLogRecord> getRawLogDataForDateRange(final String channelName,
+		final LocalDateTime startTime, final LocalDateTime endTime);
 
 
-    void parseChatLogs(final VideoDetails videoDetails,
-        final List<ChatLogRecord> chatLogs);
+	Map<String, String> parseChatLogs(final VideoDetails videoDetails,
+		final List<ChatLogRecord> chatLogs);
 }

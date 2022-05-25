@@ -1,4 +1,4 @@
-FROM amazoncorretto:18
+FROM eclipse-temurin:17-alpine
 
 # Set the system timezone, default to UTC
 ARG ARG_TIMEZONE="UTC"

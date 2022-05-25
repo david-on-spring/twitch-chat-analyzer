@@ -1,18 +1,17 @@
 package com.dlepe.twitchchatanalyzer.service.impl;
 
 import com.dlepe.twitchchatanalyzer.exception.NoSuchElementException;
+import com.dlepe.twitchchatanalyzer.model.VideoChatTimestamp;
 import com.dlepe.twitchchatanalyzer.model.VideoDetails;
 import com.dlepe.twitchchatanalyzer.model.mapper.TwitchVideoMapper;
+import com.dlepe.twitchchatanalyzer.repository.VideoChatTimestampRepository;
 import com.dlepe.twitchchatanalyzer.repository.VideoDetailsRepository;
 import com.dlepe.twitchchatanalyzer.service.LogService;
 import com.dlepe.twitchchatanalyzer.service.TwitchHelixService;
 import com.dlepe.twitchchatanalyzer.service.VideoService;
-import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.Streams;
 import io.swagger.model.TwitchHelixVideoResponse;
 import io.swagger.model.TwitchHelixVideoResponseData;
-import java.time.Duration;
-import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -31,12 +30,13 @@ public class VideoServiceImpl implements VideoService {
     private final LogService logService;
     private final TwitchHelixService twitchHelixService;
     private final VideoDetailsRepository videoRepository;
+    private final VideoChatTimestampRepository videoChatTimestampRepository;
     private final TwitchVideoMapper twitchVideoMapper;
 
     @Override
-    public VideoDetails getVideoByVideoId(@NonNull final String videoId) throws Exception {
+    public VideoDetails getVideoByVideoId(@NonNull final String videoId) {
         Optional<VideoDetails> videoDetails = videoRepository.findById(videoId);
-        if (!videoDetails.isPresent()) {
+        if (videoDetails.isEmpty()) {
             final TwitchHelixVideoResponse videoResponse = twitchHelixService.getVideoDetailsForVideoId(
                 videoId);
             final Optional<TwitchHelixVideoResponseData> vodData = videoResponse.getData().stream()
@@ -68,7 +68,7 @@ public class VideoServiceImpl implements VideoService {
     @Override
     @SneakyThrows
     @Async
-    public void analyzeVideoByVideoId(@NonNull String videoId) {
+    public void createVideoAnalysis(@NonNull String videoId) {
         log.info("Starting asynchronous analysis of video ID " + videoId);
         VideoDetails videoDetails = getVideoByVideoId(videoId);
 
@@ -77,16 +77,9 @@ public class VideoServiceImpl implements VideoService {
             logService.getRawLogDataForVideo(videoDetails));
     }
 
-    @VisibleForTesting
-    protected String getVideoTimestamp(final LocalDateTime startTime,
-        final LocalDateTime specifiedTime) {
-        final Duration duration = Duration.between(startTime, specifiedTime);
-        final Long totalSecondsDifference = duration.get(ChronoUnit.SECONDS);
-        final Long hours = totalSecondsDifference / 3600;
-        final Long minutes = (totalSecondsDifference % 3600) / 60;
-        final Long seconds = totalSecondsDifference % 60;
-
-        return String.format("%dh%dm%ds", hours, minutes, seconds);
+    @Override
+    public List<VideoChatTimestamp> getVideoAnalysis(@NonNull String videoId) {
+        return Streams.stream(videoChatTimestampRepository.findAll()).collect(Collectors.toList());
     }
 
 }

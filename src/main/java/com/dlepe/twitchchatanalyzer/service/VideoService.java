@@ -1,5 +1,6 @@
 package com.dlepe.twitchchatanalyzer.service;
 
+import com.dlepe.twitchchatanalyzer.model.VideoChatTimestamp;
 import com.dlepe.twitchchatanalyzer.model.VideoDetails;
 import java.util.List;
 import lombok.NonNull;
@@ -10,6 +11,9 @@ public interface VideoService {
 
     List<VideoDetails> getVideosForUserId(@NonNull final String userId);
 
-    void analyzeVideoByVideoId(@NonNull final String videoId);
+    void createVideoAnalysis(@NonNull final String videoId);
+
+    List<VideoChatTimestamp> getVideoAnalysis(@NonNull final String videoId);
+
 
 }

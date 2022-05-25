@@ -1,9 +1,6 @@
 package com.dlepe.twitchchatanalyzer.model;
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
-import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
+import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.Map;
 import lombok.Builder;
@@ -15,15 +12,21 @@ import org.springframework.data.redis.core.index.Indexed;
 @Data
 @Builder
 @RedisHash("VideoChatTimestamp")
-public class VideoChatTimestamp {
+public class VideoChatTimestamp implements Serializable {
 
     @Id
-    @JsonDeserialize(using = LocalDateTimeDeserializer.class)
-    @JsonSerialize(using = LocalDateTimeSerializer.class)
+    private String id;
+
+    @Indexed
     private LocalDateTime timestamp;
 
     @Indexed
     private String videoId;
 
+    @Indexed
+    private String channelName;
+
     private Map<String, Long> chatMetrics;
+
+    private String timestampUrl;
 }

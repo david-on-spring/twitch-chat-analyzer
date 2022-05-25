@@ -1,5 +1,19 @@
 package com.dlepe.twitchchatanalyzer.config;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.annotation.PropertyAccessor;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.jsontype.impl.LaissezFaireSubTypeValidator;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
+import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -18,6 +32,7 @@ import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
 
 @Configuration
+@Slf4j
 public class TwitchChatAnalyzerConfiguration {
 
     private static final String TWITCH_OAUTH_REGISTRATION_ID = "twitch";
@@ -87,6 +102,15 @@ public class TwitchChatAnalyzerConfiguration {
             .authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
             .build();
         return new InMemoryReactiveClientRegistrationRepository(registration);
+    }
+
+    @Bean
+    ObjectMapper objectMapper() {
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JavaTimeModule());
+        objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        objectMapper.setSerializationInclusion(Include.NON_NULL);
+        return objectMapper;
     }
 
 }

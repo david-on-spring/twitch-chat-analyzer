@@ -4,6 +4,8 @@ import static org.mockito.Mockito.when;
 
 import com.dlepe.twitchchatanalyzer.config.TwitchEmoteConfiguration;
 import com.dlepe.twitchchatanalyzer.dto.ChatLogRecord;
+import com.dlepe.twitchchatanalyzer.repository.VideoChatTimestampRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -20,7 +22,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
@@ -38,22 +39,26 @@ public class LogServiceImplTest {
     private TwitchEmoteConfiguration mockEmoteConfiguration;
 
     @Mock
-    private RedisTemplate<Object, Object> mockRedisTemplate;
+    private VideoChatTimestampRepository mockVideoTimestampRepo;
+
+    @Mock
+    private ObjectMapper mockObjectMapper;
 
 
     private LogServiceImpl logService;
 
     @BeforeEach
     void setup() {
-        logService = new LogServiceImpl(mockWebClient, mockEmoteConfiguration, mockRedisTemplate);
+        logService = new LogServiceImpl(mockWebClient, mockEmoteConfiguration, mockVideoTimestampRepo,
+            mockObjectMapper);
     }
 
     @Test
     @SneakyThrows
     void testGetLogDataForDateRange() {
         final int numberOfExpectedChatRecords = 16;
-        final LocalDateTime startTime = LocalDateTime.of(2022, 05, 19, 0, 1, 0);
-        final LocalDateTime endTime = LocalDateTime.of(2022, 05, 19, 23, 30, 50);
+        final LocalDateTime startTime = LocalDateTime.of(2022, 5, 19, 0, 1, 0);
+        final LocalDateTime endTime = LocalDateTime.of(2022, 5, 19, 23, 30, 50);
 
         final String logData = getTestChatLogs(VALID_CHAT_LOGS);
         setupWebClientMocks(logData);
@@ -97,11 +102,11 @@ public class LogServiceImplTest {
     }
 
     private void setupWebClientMocks(final String webClientResponse) {
-        final WebClient.RequestHeadersUriSpec uriSpecMock = Mockito.mock(
+        final var uriSpecMock = Mockito.mock(
             WebClient.RequestHeadersUriSpec.class);
-        final WebClient.RequestHeadersSpec headersSpecMock = Mockito.mock(
+        final var headersSpecMock = Mockito.mock(
             WebClient.RequestHeadersSpec.class);
-        final WebClient.RequestHeadersSpec mediaTypeSpecMock = Mockito.mock(
+        final var mediaTypeSpecMock = Mockito.mock(
             WebClient.RequestHeadersSpec.class);
         final WebClient.ResponseSpec responseSpecMock = Mockito.mock(WebClient.ResponseSpec.class);
 

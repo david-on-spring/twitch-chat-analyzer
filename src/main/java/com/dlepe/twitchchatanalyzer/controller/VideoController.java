@@ -1,5 +1,6 @@
 package com.dlepe.twitchchatanalyzer.controller;
 
+import com.dlepe.twitchchatanalyzer.model.VideoChatTimestamp;
 import com.dlepe.twitchchatanalyzer.model.VideoDetails;
 import com.dlepe.twitchchatanalyzer.service.VideoService;
 import java.util.List;
@@ -33,7 +34,13 @@ public class VideoController {
     @PostMapping("/{videoId}/analysis")
     @SneakyThrows
     public ResponseEntity<Void> createVideoAnalysis(@PathVariable final String videoId) {
-        videoService.analyzeVideoByVideoId(videoId);
+        videoService.createVideoAnalysis(videoId);
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/{videoId}/analysis")
+    @SneakyThrows
+    public ResponseEntity<List<VideoChatTimestamp>> getVideoAnalysis(@PathVariable final String videoId) {
+        return ResponseEntity.ok(videoService.getVideoAnalysis(videoId));
     }
 }

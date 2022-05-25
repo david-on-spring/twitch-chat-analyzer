@@ -102,4 +102,15 @@ public class LogParseUtils {
 
         return duration;
     }
+
+    public static String getVideoTimestampString(final LocalDateTime startTime,
+        final LocalDateTime specifiedTime) {
+        final Duration duration = Duration.between(startTime, specifiedTime);
+        final long totalSecondsDifference = duration.get(ChronoUnit.SECONDS);
+        final Long hours = totalSecondsDifference / 3600;
+        final Long minutes = (totalSecondsDifference % 3600) / 60;
+        final Long seconds = totalSecondsDifference % 60;
+
+        return String.format("%dh%dm%ds", hours, minutes, seconds);
+    }
 }

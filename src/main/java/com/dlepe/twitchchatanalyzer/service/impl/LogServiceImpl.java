@@ -4,9 +4,11 @@ import com.dlepe.twitchchatanalyzer.config.TwitchEmoteConfiguration;
 import com.dlepe.twitchchatanalyzer.dto.ChatLogRecord;
 import com.dlepe.twitchchatanalyzer.model.VideoChatTimestamp;
 import com.dlepe.twitchchatanalyzer.model.VideoDetails;
-import com.dlepe.twitchchatanalyzer.repository.operations.VideoTimestampInsertUpdateOperation;
+import com.dlepe.twitchchatanalyzer.repository.VideoChatTimestampRepository;
 import com.dlepe.twitchchatanalyzer.service.LogParseUtils;
 import com.dlepe.twitchchatanalyzer.service.LogService;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -15,11 +17,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -35,7 +37,8 @@ public class LogServiceImpl implements LogService {
 
     private final WebClient logsWebClient;
     private final TwitchEmoteConfiguration configuredEmotes;
-    private final RedisTemplate<Object, Object> redisTemplate;
+    private final VideoChatTimestampRepository videoChatTimestampRepository;
+    private final ObjectMapper objectMapper;
 
 
     @Override
@@ -67,7 +70,7 @@ public class LogServiceImpl implements LogService {
 
         // Optimize by grouping aggregating all chat text having similar timestamps
         // Also, consider skipping any chat text where chatText.length < smallest monitored emote
-        return Arrays.asList(response.block().split("\n")).stream()
+        return Arrays.asList(response.block().split("\n")).parallelStream()
             .map(logLine -> buildChatLogRecord(logLine, channelName))
             .filter((logRecord) -> Objects.nonNull(logRecord)
                 && (logRecord.getLogTimestamp().isAfter(startTime)
@@ -92,7 +95,6 @@ public class LogServiceImpl implements LogService {
                 .logTimestamp(logTimestamp)
                 .build();
         } catch (Exception e) {
-            log.error("Ignoring log line due to an issue parsing the log line", e);
             return null;
         }
     }
@@ -137,15 +139,33 @@ public class LogServiceImpl implements LogService {
                     return;
                 }
 
-                final VideoChatTimestamp videoChatTimestamp = VideoChatTimestamp.builder()
-                    .videoId(videoDetails.getId())
-                    .timestamp(logRecord.getLogTimestamp())
-                    .chatMetrics(metrics)
-                    .build();
+                try {
+                    final String hashKey =
+                        videoDetails.getId() + "-" + objectMapper.writeValueAsString(
+                            logRecord.getLogTimestamp());
 
-                // Persist to Redis and merge into existing results, if any are available
-                redisTemplate.execute(
-                    VideoTimestampInsertUpdateOperation.of(videoChatTimestamp));
+                    Optional<VideoChatTimestamp> existingRecord = videoChatTimestampRepository.findById(hashKey);
+                    if (existingRecord.isPresent()) {
+                        final VideoChatTimestamp existingTimestamp = existingRecord.get();
+                        metrics.forEach((k, v) -> existingTimestamp.getChatMetrics().merge(k, v,
+                            Long::sum));
+                        videoChatTimestampRepository.save(existingTimestamp);
+                    } else {
+                        var newRecord = VideoChatTimestamp.builder()
+                            .id(hashKey)
+                            .timestamp(logRecord.getLogTimestamp())
+                            .channelName(videoDetails.getChannelName())
+                            .videoId(videoDetails.getId())
+                            .chatMetrics(metrics)
+                            .timestampUrl(videoDetails.getVideoUrl() + "?t=" + LogParseUtils.getVideoTimestampString(
+                                videoDetails.getVideoStartTime(), logRecord.getLogTimestamp()))
+                            .build();
+                        videoChatTimestampRepository.save(newRecord);
+                    }
+                } catch (JsonProcessingException e) {
+                    log.error("Cannot serialize the date - skipping record");
+                    return;
+                }
             });
     }
 }

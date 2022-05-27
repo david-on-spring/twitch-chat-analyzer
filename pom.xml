@@ -35,7 +35,7 @@
     <jaxb-api-version>2.3.1</jaxb-api-version>
     <jaxb-runtime-version>3.0.2</jaxb-runtime-version>
     <swagger-codegen-maven-plugin-version>3.0.34</swagger-codegen-maven-plugin-version>
-    <exec-maven-plugin-version>3.0.0</exec-maven-plugin-version>
+    <exec-maven-plugin-version>3.3.0</exec-maven-plugin-version>
     <project-openapi-path>${project.basedir}/src/main/resources/openapi</project-openapi-path>
     <google-guava-version>31.1-jre</google-guava-version>
     <spring-boot-data-version>2.7.0</spring-boot-data-version>

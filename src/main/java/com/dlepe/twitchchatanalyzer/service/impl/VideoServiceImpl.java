@@ -12,17 +12,18 @@ import com.dlepe.twitchchatanalyzer.service.VideoService;
 import com.google.common.collect.Streams;
 import io.swagger.model.TwitchHelixVideoResponse;
 import io.swagger.model.TwitchHelixVideoResponseData;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -73,16 +74,16 @@ public class VideoServiceImpl implements VideoService {
 	@Async
 	public CompletableFuture<Void> createVideoAnalysis(@NonNull String videoId) {
 		log.info("Starting asynchronous analysis of video ID " + videoId);
-		VideoDetails videoDetails = getVideoByVideoId(videoId);
+		final VideoDetails videoDetails = getVideoByVideoId(videoId);
 
-		// Call logService to fetch and parse logs
-		final Map<String, String> bestMoments = logService.parseChatLogs(videoDetails,
-			logService.getRawLogDataForVideo(videoDetails));
+			// Call logService to fetch and parse logs
+			final Map<String, String> bestMoments = logService.parseChatLogs(videoDetails,
+					logService.getRawLogDataForVideo(videoDetails));
 
-		// Update the video details
-		videoDetails.setIndexed(true);
-		videoDetails.setBestMoments(bestMoments);
-		videoRepository.save(videoDetails);
+			// Update the video details
+			videoDetails.setIndexed(true);
+			videoDetails.setBestMoments(bestMoments);
+			videoRepository.save(videoDetails);
 
 		log.info("Completed analysis of video ID " + videoId);
 		return CompletableFuture.completedFuture(null);

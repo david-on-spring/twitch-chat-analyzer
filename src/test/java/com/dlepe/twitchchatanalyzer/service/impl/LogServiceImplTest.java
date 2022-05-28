@@ -3,6 +3,7 @@ package com.dlepe.twitchchatanalyzer.service.impl;
 import static org.mockito.Mockito.when;
 
 import com.dlepe.twitchchatanalyzer.config.TwitchEmoteConfiguration;
+import com.dlepe.twitchchatanalyzer.dto.ChatLogAnalysis;
 import com.dlepe.twitchchatanalyzer.dto.ChatLogRecord;
 import com.dlepe.twitchchatanalyzer.repository.VideoChatTimestampRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -69,30 +70,29 @@ public class LogServiceImplTest {
         Assertions.assertEquals(numberOfExpectedChatRecords, chatLogRecords.size());
     }
 
-    // @Test
-    // @SneakyThrows
-    // void testParseChatLogs() {
-    // Map<String, List<String>> mockEmoteMapping = new HashMap<>();
-    // mockEmoteMapping.put("humor", List.of("OMEGALUL"));
-    // when(mockEmoteConfiguration.getKeywords()).thenReturn(mockEmoteMapping);
+     @Test
+     @SneakyThrows
+     void testParseChatLogs() {
+         Map<String, List<String>> mockEmoteMapping = new HashMap<>();
+         mockEmoteMapping.put("humor", List.of("OMEGALUL"));
+         when(mockEmoteConfiguration.getKeywords()).thenReturn(mockEmoteMapping);
 
-    // final LocalDateTime startTime = LocalDateTime.of(2022, 05, 19, 0, 0, 0);
-    // final LocalDateTime endTime = LocalDateTime.of(2022, 05, 19, 23, 30, 50);
-    // final String logData = getTestChatLogs(VALID_CHAT_LOGS);
-    // setupWebClientMocks(logData);
+         final LocalDateTime startTime = LocalDateTime.of(2022, 5, 19, 0, 0, 0);
+         final LocalDateTime endTime = LocalDateTime.of(2022, 5, 19, 23, 30, 50);
+         final String logData = getTestChatLogs(VALID_CHAT_LOGS);
+         setupWebClientMocks(logData);
 
-    // List<ChatLogRecord> chatLogRecords =
-    // logService.getRawLogDataForDateRange(TEST_CHANNEL_NAME, startTime,
-    // endTime);
-    // // ChatLogAnalysis logAnalysis = logService.parseChatLogs(TEST_CHANNEL_NAME,
-    // // chatLogRecords);
+         List<ChatLogRecord> chatLogRecords =
+         logService.getRawLogDataForDateRange(TEST_CHANNEL_NAME, startTime,
+         endTime);
+          ChatLogAnalysis logAnalysis = logService.parseChatLogs(chatLogRecords);
 
-    // // Assert.assertEquals(3, logAnalysis.emoteMetrics().keySet().size());
+          Assert.assertEquals(3, logAnalysis.emoteMetrics().keySet().size());
 
-    // // Will fix in a dedicated PR for log parsing
-    // // Assert.assertEquals(LocalDateTime.of(2022, 05, 19, 0, 11, 0),
-    // // logAnalysis.mostPopularOccurrence());
-    // }
+          Will fix in a dedicated PR for log parsing
+          Assert.assertEquals(LocalDateTime.of(2022, 05, 19, 0, 11, 0),
+          logAnalysis.mostPopularOccurrence());
+     }
 
     @SneakyThrows
     private String getTestChatLogs(final String filename) {

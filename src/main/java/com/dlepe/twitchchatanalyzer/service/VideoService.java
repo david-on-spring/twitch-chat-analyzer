@@ -8,13 +8,15 @@ import lombok.NonNull;
 
 public interface VideoService {
 
-	VideoDetails getVideoByVideoId(@NonNull final String videoId) throws Exception;
+    VideoDetails getVideoByVideoId(@NonNull final String videoId) throws Exception;
 
-	List<VideoDetails> getVideosForUserId(@NonNull final String userId);
+    List<VideoDetails> getVideosForUserId(@NonNull final String userId);
 
-	CompletableFuture<Void> createVideoAnalysis(@NonNull final String videoId);
+    List<VideoDetails> getVideosForUsername(@NonNull final String username);
 
-	List<VideoChatTimestamp> getVideoAnalysis(@NonNull final String videoId);
+    CompletableFuture<Void> createVideoAnalysis(@NonNull final String videoId);
+
+    List<VideoChatTimestamp> getVideoAnalysis(@NonNull final String videoId);
 
 
 }

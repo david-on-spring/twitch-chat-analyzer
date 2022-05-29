@@ -40,33 +40,24 @@ public class TwitchHelixServiceImpl implements TwitchHelixService {
         return getUserDetails("id", userId).block();
     }
 
+    @Override
+    public TwitchHelixUserResponse getUserDetailsForUsername(String username) {
+        return getUserDetails("login", username).block();
+    }
+
     private Mono<TwitchHelixVideoResponse> getVideoDetails(@NonNull final String paramName,
         @NonNull final String paramValue) {
-        // TODO: implement auto pagination
-        final Mono<TwitchHelixVideoResponse> response = twitchWebClient
-            .get()
-            .uri(uriBuilder -> uriBuilder
-                .path("/videos")
-                .queryParam(paramName,
-                    paramValue)
-                .build(paramValue))
-            .accept(MediaType.APPLICATION_JSON)
-            .retrieve()
+        return twitchWebClient.get().uri(
+                uriBuilder -> uriBuilder.path("/videos").queryParam(paramName, paramValue)
+                    .build(paramValue)).accept(MediaType.APPLICATION_JSON).retrieve()
             .bodyToMono(TwitchHelixVideoResponse.class);
-        return response;
     }
 
     private Mono<TwitchHelixUserResponse> getUserDetails(@NonNull final String paramName,
         @NonNull final String paramValue) {
-        return twitchWebClient
-            .get()
-            .uri(uriBuilder -> uriBuilder
-                .path("/users")
-                .queryParam(paramName,
-                    paramValue)
-                .build(paramValue))
-            .accept(MediaType.APPLICATION_JSON)
-            .retrieve()
+        return twitchWebClient.get().uri(
+                uriBuilder -> uriBuilder.path("/users").queryParam(paramName, paramValue)
+                    .build(paramValue)).accept(MediaType.APPLICATION_JSON).retrieve()
             .bodyToMono(TwitchHelixUserResponse.class);
     }
 

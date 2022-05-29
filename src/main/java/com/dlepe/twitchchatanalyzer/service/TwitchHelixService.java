@@ -15,6 +15,8 @@ public interface TwitchHelixService {
     // User Service
     TwitchHelixUserResponse getUserDetailsForUserId(final String userId);
 
+    TwitchHelixUserResponse getUserDetailsForUsername(final String username);
+
     // Clips Service
 
 }

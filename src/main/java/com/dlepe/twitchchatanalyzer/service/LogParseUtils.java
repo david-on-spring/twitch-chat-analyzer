@@ -1,5 +1,6 @@
 package com.dlepe.twitchchatanalyzer.service;
 
+import com.dlepe.twitchchatanalyzer.dto.ChatLogRecord;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -112,5 +113,31 @@ public class LogParseUtils {
         final Long seconds = totalSecondsDifference % 60;
 
         return String.format("%dh%dm%ds", hours, minutes, seconds);
+    }
+
+    public static ChatLogRecord buildChatLogRecord(final String logLine, final String channelName) {
+        try {
+            final String[] logParts = logLine.split(" #" + channelName + " ");
+            final LocalDateTime logTimestamp = getTimestampToNearestMinute(
+                logParts[0]);
+            final String[] chatLogParts = logParts[1].split(":", 2);
+            final String chatterUsername = chatLogParts[0];
+            final String chatText = chatLogParts[1].strip();
+            return ChatLogRecord.builder()
+                .channelName(channelName)
+                .username(chatterUsername)
+                .chatText(chatText)
+                .logTimestamp(logTimestamp)
+                .build();
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    public static boolean isWithinTimestamp(final LocalDateTime startTime,
+        final LocalDateTime endTime,
+        final LocalDateTime logTime) {
+        return (logTime.isAfter(startTime) || logTime.isEqual(startTime))
+            && (logTime.isBefore(endTime) || logTime.isEqual(endTime));
     }
 }

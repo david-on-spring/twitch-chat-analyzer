@@ -28,7 +28,7 @@
   </profiles>
   <properties>
     <java.version>17</java.version>
-    <swagger-annotations-version>2.2.0</swagger-annotations-version>
+    <swagger-annotations-version>2.2.1</swagger-annotations-version>
     <spring-fox-version>3.0.0</spring-fox-version>
     <dockerfile-maven-version>1.4.13</dockerfile-maven-version>
     <jaxb-api-version>2.3.1</jaxb-api-version>

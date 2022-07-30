@@ -42,7 +42,7 @@
     <spring-data-version>2.7.2</spring-data-version>
     <orika-mapper-version>1.5.4</orika-mapper-version>
     <apache-commons-version>3.12.0</apache-commons-version>
-    <org-mapstruct-version>1.5.1.Final</org-mapstruct-version>
+    <org-mapstruct-version>1.5.2.Final</org-mapstruct-version>
     <maven-compiler-version>3.10.1</maven-compiler-version>
   </properties>
   <dependencies>

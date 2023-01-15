@@ -32,7 +32,7 @@
     <spring-fox-version>3.0.0</spring-fox-version>
     <dockerfile-maven-version>1.4.13</dockerfile-maven-version>
     <jaxb-api-version>2.3.1</jaxb-api-version>
-    <jaxb-runtime-version>4.0.0</jaxb-runtime-version>
+    <jaxb-runtime-version>4.0.1</jaxb-runtime-version>
     <swagger-codegen-maven-plugin-version>3.0.35</swagger-codegen-maven-plugin-version>
     <exec-maven-plugin-version>3.3.0</exec-maven-plugin-version>
     <project-openapi-path>${project.basedir}/src/main/resources/openapi</project-openapi-path>

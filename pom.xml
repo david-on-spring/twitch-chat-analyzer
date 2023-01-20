@@ -37,7 +37,7 @@
     <exec-maven-plugin-version>3.3.0</exec-maven-plugin-version>
     <project-openapi-path>${project.basedir}/src/main/resources/openapi</project-openapi-path>
     <google-guava-version>31.1-jre</google-guava-version>
-    <spring-boot-data-version>3.0.1</spring-boot-data-version>
+    <spring-boot-data-version>3.0.2</spring-boot-data-version>
     <redis-client-version>3.8.0</redis-client-version>
     <spring-data-version>2.7.2</spring-data-version>
     <orika-mapper-version>1.5.4</orika-mapper-version>

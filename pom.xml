@@ -39,7 +39,7 @@
     <google-guava-version>31.1-jre</google-guava-version>
     <spring-boot-data-version>3.0.1</spring-boot-data-version>
     <redis-client-version>3.8.0</redis-client-version>
-    <spring-data-version>2.7.2</spring-data-version>
+    <spring-data-version>3.0.2</spring-data-version>
     <orika-mapper-version>1.5.4</orika-mapper-version>
     <apache-commons-version>3.12.0</apache-commons-version>
     <org-mapstruct-version>1.5.3.Final</org-mapstruct-version>
